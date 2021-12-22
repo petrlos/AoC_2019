@@ -1,2 +1,8 @@
 # Project exclude paths
 /venv/
+/.idea/AoC 2019.iml
+/.idea/modules.xml
+/.idea/dictionaries/petrlos.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/misc.xml
+/.idea/vcs.xml
