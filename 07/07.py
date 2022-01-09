@@ -60,3 +60,5 @@ for setting in settings:
     if output > maxOutput:
         maxOutput = output
 print("Task 1:", maxOutput)
+
+#TODO: Task2 day 7: Thrusters-LOOP
