@@ -1,7 +1,10 @@
 #Advent of Code 2019: Intcode Prototype
 
 def intCode(numbers, input):
-    numbers = [int(x) for x in numbers.split(",")]
+    numbersList = [int(x) for x in numbers.split(",")]
+    numbers = dict()
+    for index, number in enumerate(numbersList):
+        numbers[index] = number
     # opcode: X  1  2  3  4  5  6  7  8
     offset = [0, 4, 4, 2, 2, 3, 3, 4, 4]
     pointer = 0
