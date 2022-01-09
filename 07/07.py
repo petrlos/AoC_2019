@@ -1,73 +1,62 @@
-#Advent of Code 2019: Day7
+#Advent of Code 2019: Intcode Prototype
 from itertools import permutations
 
-def intCodeProgramm(instructions, inputNr):
-    def decodeOpcode(number):
-        opcode = []
-        opcode.append(number % 100)  # celociselny zbytek po vydeleni 100 je opcode
-        numberStr = str(number).rjust(5, "0")  # doplni do cisla nuly na pocet znaku 5
-        for i in range(2, -1, -1):
-            opcode.append(int(numberStr[i]))
-        return opcode
-
-    #opcode:  X 1 2 3 4 5 6 7 8
-    offset = [0,4,4,2,2,3,3,4,4]
-    currentPosition = 0
-    output = []
+def intCode(numbers, input):
+    numbersList = [int(x) for x in numbers.split(",")]
+    numbers = dict()
+    for index, number in enumerate(numbersList):
+        numbers[index] = number
+    # opcode: X  1  2  3  4  5  6  7  8
+    offset = [0, 4, 4, 2, 2, 3, 3, 4, 4]
+    pointer = 0
+    outputs = []
     inputIndex = 0
-    while instructions[currentPosition] != 99:
-        opcIndex = [] #zde jsou ulozeny INDEXY hodnot
-        opcode = decodeOpcode(instructions[currentPosition])
-        for i in range(1,offset[opcode[0]]):
-            if opcode[i] == 0: #parameter mode
-                parameter = instructions[currentPosition+i]
-            else: #position mode
-                parameter = currentPosition+i
-            opcIndex.append(parameter)
-        currentPosition += offset[opcode[0]]
-        if opcode[0] == 1: #soucet
-            instructions[opcIndex[2]] = instructions[opcIndex[0]] + instructions[opcIndex[1]]
-        elif opcode[0] == 2: #soucin
-            instructions[opcIndex[2]] = instructions[opcIndex[0]] * instructions[opcIndex[1]]
-        elif opcode[0] == 3: #input
-            instructions[opcIndex[0]] = inputNr[inputIndex]
+    while True:
+        opCode = numbers[pointer]
+        modes = [(opCode // 10 ** i) % 10 for i in range(2, 5)]
+        opCode = opCode % 100
+        if opCode == 99:
+            return outputs
+        positions = [numbers[pointer + i] for i in range(1,offset[opCode])]
+        parameters = []
+        for position, mode in zip(positions, modes):
+            if mode == 0: #position mode - vrati cislo, ktere se nachazi na prislusnem indexu
+                parameters.append(numbers[position])
+            elif mode == 1: #relative mode - vrati primo to cislo
+                parameters.append(position)
+        pointer += offset[opCode]
+        if opCode == 1: #addition
+            numbers[positions[2]] = parameters[0] + parameters[1]
+        elif opCode == 2: #multiply
+            numbers[positions[2]] = parameters[0] * parameters[1]
+        elif opCode == 3: #input
+            numbers[positions[0]] = input[inputIndex]
             inputIndex += 1
-        elif opcode[0] == 4: #output
-            output.append(instructions[opcIndex[0]])
-        elif opcode[0] == 5: #jump if true - neni roven nule
-            if instructions[opcIndex[0]] != 0:
-                currentPosition = instructions[opcIndex[1]]
-        elif opcode[0] == 6: #jump if false - je roven nule
-            if instructions[opcIndex[0]] == 0:
-                currentPosition = instructions[opcIndex[1]]
-        elif opcode[0] == 7: #is less
-            #pokud je prvni cislo mensi nez druhe ulozi jednicku, jinak 0
-            if instructions[opcIndex[0]] < instructions[opcIndex[1]]:
-                instructions[opcIndex[2]] = 1
-            else:
-                instructions[opcIndex[2]] = 0
-        elif opcode[0] == 8: #is equal
-            #pokud jsou dve cisla stejna, ulozi jednicku, jinak 0
-            if instructions[opcIndex[0]] == instructions[opcIndex[1]]:
-                instructions[opcIndex[2]] = 1
-            else:
-                instructions[opcIndex[2]] = 0
-    return output[-1]
+        elif opCode == 4: #output
+            outputs.append(parameters[0])
+        elif opCode == 5: #jump if true
+            if parameters[0] != 0:
+                pointer = parameters[1]
+        elif opCode == 6: #jump if false
+            if parameters[0] == 0:
+                pointer = parameters[1]
+        elif opCode == 7: #less than
+            numbers[positions[-1]] = parameters[0] < parameters[1]
+        elif opCode == 8: #equals
+            numbers[positions[-1]] = parameters[0] == parameters[1]
 
-#MAIN
-sequences = permutations(list(range(5)), 5)
+#MAIN:
 
-with open("data.txt") as file:
-    data = file.read()
-results = []
+with open("test.txt") as file:
+    numbers = file.read()
 
-for sequence in sequences:
-    input = [0]
-    for phaseSetting in sequence:
-        startInstructions = [int(x) for x in data.split(",")]
-        nextSignal = intCodeProgramm(startInstructions, [phaseSetting, input[-1]])
-        input.append(nextSignal)
-    finalOutput = input[-1]
-    results.append(finalOutput)
+settings = permutations(range(5), 5)
 
-print("Task 1:", max(results))
+maxOutput = -1
+for setting in settings:
+    output = 0
+    for input in setting:
+        output = intCode(numbers, [input, output])[0]
+    if output > maxOutput:
+        maxOutput = output
+print("Task 1:", maxOutput)
