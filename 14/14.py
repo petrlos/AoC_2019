@@ -1,18 +1,22 @@
 #Advent of Code 2019: Day 14
-#TODO: ORE -> FUEL, only parsing works
+from pprint import pprint as pp
 
-import re
 def parseData(lines):
     rules = {}
     for line in lines:
-        left, right = line.split("=>")
-        rules[right] = left.split(",")
+        ingred, result = line.split(" => ")
+        amount, key = result.split(" ")
+        rules_single_line = []
+        for ingredient in ingred.split(", "):
+            am, ingr = ingredient.split(" ")
+            rules_single_line.append((ingr, int(am)))
+        rules[key] = (int(amount), rules_single_line)
     return rules
 
 #MAIN
-regNum = re.compile(r"\d+")
 with open("test.txt") as file:
-    lines = file.read().replace(" ","").splitlines()
+    lines = file.read().splitlines()
 
 rules = parseData(lines)
-start = "1FUEL"
+
+pp(rules)
