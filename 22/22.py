@@ -1,54 +1,38 @@
 #Advent of Code 2019: Day 22
-#TODO: test working, data not
 
 import re
-def dealIntoNewStack(deck):
+def deal_into_new_stack(deck):
     return list(reversed(deck))
 
-def cutNCards(deck, n):
-    if n > 0:
-        cut = deck[0:n]
-        rest = deck[n:]
-        return rest + cut
-    else:
-        cut = deck[n:]
-        rest = deck[:n]
-        return cut + rest
+def cut_N_cards(deck, n): #simplified
+    return deck[n:] + deck[:n]
 
-def dealWithIncrement(deck, n):
-    oldDeck = {}
-    newDeck = {}
-    for index, card in enumerate(deck):
-        oldDeck.setdefault(index, card)
-        newDeck.setdefault(index, None)
-    currentPosition = 0
-    for i in range(len(deck)):
-        newDeck[currentPosition] = oldDeck[i]
-        currentPosition = (currentPosition + n) % len(deck)
-    result = []
-    for i in range(len(deck)):
-        result.append(newDeck[i])
-    return result
+def deal_with_increment(deck, increment):
+    size = len(deck)
+    new_deck = [0] * size
+    index = 0
+    for card in deck:
+        new_deck[index] = card
+        index = (index + increment) % size  # wrap around if necessary
+    return new_deck
+
+def run_instructions(file_name, size):
+    regNum = re.compile(r"-?\d+")
+    with open(file_name) as file:
+        lines = file.read().splitlines()
+    deck = list(range(size))
+    for line in lines:
+        if "increment" in line:
+            n = int(regNum.search(line).group())
+            deck = deal_with_increment(deck, n)
+        elif "cut" in line:
+            n = int(regNum.search(line).group())
+            deck = cut_N_cards(deck, n)
+        elif "new" in line:
+            deck = deal_into_new_stack(deck)
+    return deck
 
 #MAIN:
-regNum = re.compile(r"-?\d")
 
-with open("data.txt") as file:
-    lines = file.read().splitlines()
-
-deck = list(range(10007))
-
-
-for line in lines:
-    if "increment" in line:
-        n = int(regNum.search(line).group())
-        deck = dealWithIncrement(deck, n)
-    if "cut" in line:
-        n = int(regNum.search(line).group())
-        deck = cutNCards(deck, n)
-    if "new" in line:
-        deck = dealIntoNewStack(deck)
-
-print(deck.index(2019))
-
-print(deck[8971])
+new_deck = run_instructions("data.txt", 10007)
+print("Task 1:", new_deck.index(2019))
