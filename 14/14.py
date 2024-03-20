@@ -1,6 +1,7 @@
 #Advent of Code 2019: Day 14
-from icecream import ic
-from collections import deque, defaultdict
+from collections import defaultdict
+from datetime import datetime
+time_start = datetime.now()
 
 def parse_data(lines):
     rules = defaultdict(list)
@@ -13,51 +14,33 @@ def parse_data(lines):
             rules[key].append([ingr, int(am)])
     return rules
 
-def clean_up(needed):
-    needed_dict = defaultdict(int)
-    result = deque()
-    for item in needed:
-        ingred, count = item
-        needed_dict[ingred] += count
-    for key, value in needed_dict.items():
-        result.append([key, value])
-    return result
-
 def solve_reactions(rules):
-    needed = deque([["FUEL", 1]])
-    stack = dict({x: 0 for x in rules.keys()})
+    def all_positive(stack):
+        return not all(value >= 0 for value in stack.values())
 
-    ore_count = 0
-    while needed:
-        ingr, quan_needed = needed.popleft()
-        if quan_needed == 0:
-            continue
-        if ingr == "ORE":
-            ore_count += quan_needed
-            continue
-        multipler = quan_needed // rules[ingr][0]
-        if multipler == 0:
-            multipler = 1
-        if quan_needed % rules[ingr][0] > 0:
-            multipler += 1
-        stack[ingr] += rules[ingr][0] * multipler - quan_needed
-        for item in rules[ingr][1:]:
-            ingr_needed, quantity = item
-            needed.append([ingr_needed, quantity * multipler])
-        for index, item in enumerate(needed):
-            ingr, count = item
-            if ingr == "ORE":
+    #negative = must be produced, positive = on stack for further use/remains from other reactions
+    stack = dict({x: 0 for x in rules.keys()})
+    stack["FUEL"] = -1
+    stack["ORE"] = 0
+
+    while all_positive(stack):
+        for ingred, amount in stack.items():
+            if amount >= 0:
                 continue
-            used_items = min(count, stack[ingr])
-            needed[index][1] = max(0, count - stack[ingr])
-            stack[ingr] = max(0, stack[ingr] - used_items)
-        needed = clean_up(needed)
-    return ore_count
+            multipler, *new_products = rules[ingred]
+            stack[ingred] += multipler
+            for product in new_products:
+                ing, am = product
+                if ing == "ORE": #ORE can`t be negative - "all_positive" function would fail
+                    stack[ing] += am
+                else:
+                    stack[ing] -= am
+    return stack["ORE"]
 
 #MAIN
 
-file_names = "test1.txt,test2.txt,test3.txt,test4.txt,test5.txt".split(",")
-results = map(int, "31,165,13312,180697,2210736".split(","))
+"""file_names = "test1.txt,test2.txt,test3.txt,test4.txt,test5.txt".split(",")
+results = list(map(int, "31,165,13312,180697,2210736".split(",")))
 
 for name, expected_result in zip(file_names,results):
     with open(name) as file:
@@ -70,3 +53,13 @@ for name, expected_result in zip(file_names,results):
     print(f"Result for {name}: {ore_count}")
 
     assert ore_count == expected_result, f"Failed for {name}. Expected {expected_result}, got {ore_count}"
+print("All tests correct \n")"""
+
+with open("data.txt") as file:
+    lines = file.read().splitlines()
+
+rules = parse_data(lines)
+
+ore_count = solve_reactions(rules)
+print("Part 1:", ore_count)
+print(datetime.now() - time_start)
