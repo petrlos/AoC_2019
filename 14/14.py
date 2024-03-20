@@ -28,9 +28,7 @@ def solve_reactions(rules, fuel):
             if amount >= 0:
                 continue
             multipler, *new_products = rules[ingred]
-            help = (-1 *amount) // multipler
-            if help == 0:
-                help = 1
+            help = max(1, (-1 *amount) // multipler) #if help == 0, help = 1
             stack[ingred] += (multipler * help )
             for product in new_products:
                 ing, am = product
@@ -41,12 +39,27 @@ def solve_reactions(rules, fuel):
     return stack["ORE"]
 
 #MAIN
-
 with open("data.txt") as file:
     lines = file.read().splitlines()
-
 rules = parse_data(lines)
 
+#Part 1
 ore_count = solve_reactions(rules, 1)
 print("Part 1:", ore_count)
-print(datetime.now() - time_start)
+
+#Part 2
+start = 0
+end = 5_000_000
+huge_number = 1000000000000
+
+#binary bisection
+#total amount of ore needed for X fuel production must be smaller than huge_number
+while start + 1 != end:
+    mid = (end  + start) // 2
+    ore_count = huge_number - solve_reactions(rules, mid)
+    if ore_count > 0:
+        start = mid
+    else:
+        end = mid
+
+print("Part 2:", start)
