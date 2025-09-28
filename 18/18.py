@@ -1,11 +1,12 @@
 #Advenf of Code 2019 Day 18
 from icecream import ic
-from collections import deque
+from collections import deque, namedtuple
+import heapq
 
 def flood_fill(key, coords):
     visited = {coords: (0, "")} #coords: distance from start, doors visited
     queue = deque([coords])
-    edges = dict()
+    new_edges = dict()
     while queue:
         row, col = queue.popleft()
         dist, path = visited[(row, col)]
@@ -17,7 +18,7 @@ def flood_fill(key, coords):
             if maze[n_row][n_coll].islower(): #finds key
                 visited[n_row, n_coll] = (dist + 1, path) #
                 queue.append((n_row, n_coll))
-                edges["".join(sorted(key+maze[n_row][n_coll]))] = (dist + 1, path)
+                new_edges["".join(sorted(key+maze[n_row][n_coll]))] = (dist + 1, set(path))
                 continue
             if maze[n_row][n_coll].isupper(): #finds door
                 visited[n_row, n_coll] = (dist + 1, path + maze[n_row][n_coll])
@@ -25,12 +26,31 @@ def flood_fill(key, coords):
                 continue
             queue.append((n_row, n_coll))
             visited[(n_row, n_coll)] = (dist+1, path)
-    return edges
+    return new_edges
+
+def find_path(start, all_keys):
+
+    all_keys = set(all_keys)
+    all_keys.add("@")
+    queue = [(0, start, start)] # distance, position, path
+    heapq.heapify(queue)
+
+    while queue:
+        dist, pos, path = heapq.heappop(queue)
+        if set(path) == all_keys: return dist
+        for edge, parameters in edges.items():
+            if pos in edge:
+                dest = edge.replace(pos, "")
+                if dest not in path:  # key not yet picked up
+                    added_distance, keys_needed = parameters
+                    if len(keys_needed - set(path.upper())) == 0:
+                        heapq.heappush(queue, (dist + added_distance, dest, path+dest))
 
 #MAIN
-with open("test.txt") as file:
+with open("data.txt") as file:
     maze = file.read().splitlines()
 
+#find all keys
 keys = dict()
 for row in range(len(maze)):
     for col in range(len(maze[0])):
@@ -39,9 +59,14 @@ for row in range(len(maze)):
         if maze[row][col].islower():
             keys[maze[row][col]] = (row, col)
 
-edges = []
+#find paths from start to all keys and doors lying on them
+edges = flood_fill("@", start)
 
-first_step = flood_fill("@", start)
-print(first_step)
+#find shortest path between each pair of keys and doors lying on them
 for key, coords in keys.items():
     new_edges = flood_fill(key, coords)
+    for path, parameters in new_edges.items():
+        if path not in edges:
+            edges[path] = parameters
+
+print(find_path("@", keys.keys()))
