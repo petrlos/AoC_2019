@@ -21,7 +21,7 @@ def flood_fill(key, coords):
                 new_edges["".join(sorted(key+maze[n_row][n_coll]))] = (dist + 1, set(path))
                 continue
             if maze[n_row][n_coll].isupper(): #finds door
-                visited[n_row, n_coll] = (dist + 1, path + maze[n_row][n_coll])
+                visited[n_row, n_coll] = (dist + 1, path + maze[n_row][n_coll].lower())
                 queue.append((n_row, n_coll))
                 continue
             queue.append((n_row, n_coll))
@@ -32,19 +32,23 @@ def find_path(start, all_keys):
 
     all_keys = set(all_keys)
     all_keys.add("@")
-    queue = [(0, start, start)] # distance, position, path
+    queue = [(0, start, set(start))] # distance, position, path
     heapq.heapify(queue)
+    visited = {}
 
     while queue:
         dist, pos, path = heapq.heappop(queue)
-        if set(path) == all_keys: return dist
+        state = (pos, frozenset(path))
+        if state in visited and visited[state] <= dist: continue
+        visited[state] = dist
+        if path == all_keys: return dist
         for edge, parameters in edges.items():
             if pos in edge:
                 dest = edge.replace(pos, "")
                 if dest not in path:  # key not yet picked up
                     added_distance, keys_needed = parameters
-                    if len(keys_needed - set(path.upper())) == 0:
-                        heapq.heappush(queue, (dist + added_distance, dest, path+dest))
+                    if len(keys_needed - path) == 0:
+                        heapq.heappush(queue, (dist + added_distance, dest, path | set(dest)))
 
 #MAIN
 with open("data.txt") as file:
@@ -69,4 +73,4 @@ for key, coords in keys.items():
         if path not in edges:
             edges[path] = parameters
 
-print(find_path("@", keys.keys()))
+print("Part 1:", find_path("@", keys.keys()))
