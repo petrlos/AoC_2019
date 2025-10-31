@@ -53,12 +53,12 @@ def intCodeProgramm(instructions, inputNr):
 
 
 #MAIN
-with open("data.txt") as file:
+with open("test.txt") as file:
     data = file.read()
 
 startInstructions = [int(x) for x in data.split(",")]
 task1 = intCodeProgramm(startInstructions, 1)
 startInstructions = [int(x) for x in data.split(",")]
 task2 = intCodeProgramm(startInstructions, 5)
-print("Task 1:", task1[-1])
+print("Task 1:", task1)
 print("Task 2:", task2[-1])
